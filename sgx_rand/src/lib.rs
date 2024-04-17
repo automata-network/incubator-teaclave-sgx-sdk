@@ -798,6 +798,27 @@ impl Rng for ThreadRng {
     }
 }
 
+#[cfg(feature = "urand")]
+use rand_core::{Error, RngCore};
+#[cfg(feature = "urand")]
+impl rand_core::RngCore for ThreadRng {
+    fn next_u32(&mut self) -> u32 {
+        self.rng.borrow_mut().next_u32()
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        self.rng.borrow_mut().next_u64()
+    }
+
+    fn fill_bytes(&mut self, bytes: &mut [u8]) {
+        self.rng.borrow_mut().fill_bytes(bytes)
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Error> {
+        Ok(RngCore::fill_bytes(self, dest))
+    }
+}
+
 /// Generates a random value using the thread-local random number generator.
 ///
 /// `random()` can generate various types of random things, and so may require
