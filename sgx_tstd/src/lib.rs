@@ -113,6 +113,7 @@
 #![feature(std_internals)]
 #![feature(str_internals)]
 #![feature(strict_provenance)]
+#![feature(exposed_provenance)]
 #![feature(type_ascription)]
 // tidy-alphabetical-end
 //
