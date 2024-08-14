@@ -33,6 +33,7 @@
 #![allow(clippy::missing_safety_doc)]
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
+#![allow(internal_features)]
 
 #[cfg(all(feature = "sim", feature = "hyper"))]
 compile_error!("feature \"sim\" and feature \"hyper\" cannot be enabled at the same time");

@@ -28,6 +28,7 @@
 #![allow(dead_code)]
 #![allow(clippy::missing_safety_doc)]
 #![allow(non_camel_case_types)]
+#![allow(internal_features)]
 
 extern crate alloc;
 

@@ -30,6 +30,7 @@
 #![allow(overflowing_literals)]
 #![allow(non_snake_case)]
 #![allow(unused_macros)]
+#![allow(internal_features)]
 
 #[macro_use]
 extern crate alloc;

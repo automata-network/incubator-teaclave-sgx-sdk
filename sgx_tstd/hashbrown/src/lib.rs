@@ -36,6 +36,7 @@
 )]
 #![warn(missing_docs)]
 #![warn(rust_2018_idioms)]
+#![allow(internal_features)]
 #![cfg_attr(feature = "nightly", warn(fuzzy_provenance_casts))]
 
 #[cfg(test)]
