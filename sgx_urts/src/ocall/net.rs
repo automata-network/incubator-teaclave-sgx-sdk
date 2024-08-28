@@ -79,7 +79,7 @@ pub unsafe extern "C" fn u_getaddrinfo_ocall(
         cur_ptr = cur.ai_next;
     }
 
-    *out_count = i;
+    *out_count.as_mut().unwrap() = i;
     libc::freeaddrinfo(res);
     0
 }
