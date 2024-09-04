@@ -21,7 +21,8 @@
         allocator_api,
         slice_ptr_get,
         maybe_uninit_array_assume_init,
-        strict_provenance
+        strict_provenance,
+        exposed_provenance
     )
 )]
 #![allow(
