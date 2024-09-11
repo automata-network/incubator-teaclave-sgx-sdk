@@ -46,7 +46,7 @@ extern crate sgx_crypto_sys;
 extern crate sgx_tlibc_sys;
 
 #[macro_use]
-mod arch;
+pub mod arch;
 mod asm;
 mod call;
 #[macro_use]
