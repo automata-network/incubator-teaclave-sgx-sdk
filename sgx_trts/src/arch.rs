@@ -319,6 +319,11 @@ pub struct Tds {
     pub flags: usize,
     pub xsave_size: usize,
     pub last_error: usize,
+
+    pub aex_mitigation_list: usize, /* AEX Notify mitigation handler list */
+    pub aex_notify_flag: usize,     /* Used to record the aexnotify status last time */
+    pub first_ssa_xsave: usize,     /* set by urts, relative to TCS */
+
     pub m_next: usize,
     pub tls_addr: usize,
     pub tls_array: usize,
@@ -327,6 +332,9 @@ pub struct Tds {
     pub stack_commit: usize,
     #[cfg(feature = "hyper")]
     pub index: usize,
+
+    pub aex_notify_entropy_cache: u32,
+    pub aex_notify_entropy_remaining: i32,
 }
 
 impl Tds {
@@ -389,6 +397,7 @@ pub struct Global {
     pub enclave_image_base: u64,
     pub elrange_start_base: u64,
     pub elrange_size: u64,
+    pub edmm_bk_overhead: usize, // added in 2.20
 }
 
 #[repr(C, packed)]

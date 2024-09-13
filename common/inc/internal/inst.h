@@ -46,8 +46,11 @@ typedef enum {
     SE_ERESUME,
     SE_EEXIT,
     SE_EACCEPT,
+    SE_EMODPE,
+    SE_EACCEPTCOPY,
     SE_EVERIFYREPORT2 = 0x8,
-    SE_LAST_RING3,
+    SE_EDECCSSA = 0x9,
+    SE_LAST_RING3, 
 
     SE_ECREATE = 0x0,
     SE_EADD,

@@ -54,12 +54,11 @@ typedef enum _sgx_exception_vector_t
     SGX_EXCEPTION_VECTOR_BP = 3,  /* INT 3 instruction */
     SGX_EXCEPTION_VECTOR_BR = 5,  /* BOUND instruction */
     SGX_EXCEPTION_VECTOR_UD = 6,  /* UD2 instruction or reserved opcode */
-    SGX_EXCEPTION_VECTOR_GP = 13, /* General protection exception */
-    SGX_EXCEPTION_VECTOR_PF = 14, /* Page fault exception */
+    SGX_EXCEPTION_VECTOR_GP = 13, /* General Protection Fault */
+    SGX_EXCEPTION_VECTOR_PF = 14, /* page fault */
     SGX_EXCEPTION_VECTOR_MF = 16, /* x87 FPU floating-point or WAIT/FWAIT instruction */
     SGX_EXCEPTION_VECTOR_AC = 17, /* Any data reference in memory */
     SGX_EXCEPTION_VECTOR_XM = 19, /* SSE/SSE2/SSE3 floating-point instruction */
-    SGX_EXCEPTION_VECTOR_CP = 21, /* Control protection exception */
 } sgx_exception_vector_t;
 
 typedef enum _sgx_exception_type_t
@@ -106,11 +105,29 @@ typedef struct _cpu_context_t
 } sgx_cpu_context_t;
 #endif
 
+typedef struct _exinfo_t
+{
+    uint64_t               faulting_address;
+    uint32_t               error_code;
+    uint32_t               reserved;
+}sgx_misc_exinfo_t;
+
+ __attribute__((aligned(64)))
 typedef struct _exception_info_t
 {
     sgx_cpu_context_t      cpu_context;
     sgx_exception_vector_t exception_vector;
     sgx_exception_type_t   exception_type;
+    sgx_misc_exinfo_t      exinfo;
+    uint32_t               exception_valid;
+    uint32_t               do_aex_mitigation;
+    uint64_t               xsave_size;
+#if defined (_M_X64) || defined (__x86_64__)
+    uint64_t               reserved[1];
+#else
+    uint64_t               reserved[6];
+#endif
+    uint8_t                xsave_area[0];    // 64-byte aligned
 } sgx_exception_info_t;
 
 typedef int (*sgx_exception_handler_t)(sgx_exception_info_t *info);
