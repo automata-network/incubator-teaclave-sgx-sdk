@@ -366,7 +366,7 @@ impl Tds {
 pub const TCS_POLICY_BIND: usize = 0x0000_0000; /* If set, the TCS is bound to the application thread */
 pub const TCS_POLICY_UNBIND: usize = 0x0000_0001;
 
-pub const LAYOUT_ENTRY_NUM: usize = 42;
+pub const LAYOUT_ENTRY_NUM: usize = 43;
 pub const TCS_TEMPLATE_SIZE: usize = 72;
 
 #[repr(C)]

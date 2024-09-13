@@ -56,7 +56,7 @@ mod inst;
 #[cfg(not(feature = "hyper"))]
 mod pkru;
 mod stackchk;
-mod version;
+pub mod version;
 mod xsave;
 
 pub mod capi;
