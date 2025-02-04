@@ -53,9 +53,6 @@ pub use core::prelude::v1::{
 #[doc(no_inline)]
 pub use core::prelude::v1::concat_bytes;
 
-#[allow(deprecated)]
-pub use core::prelude::v1::{RustcDecodable, RustcEncodable};
-
 // Do not `doc(no_inline)` so that they become doc items on their own
 // (no public module for them to be re-exported from).
 pub use core::prelude::v1::{

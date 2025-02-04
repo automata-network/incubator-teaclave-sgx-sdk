@@ -31,7 +31,9 @@
 #[cfg(feature = "unit_test")]
 mod tests;
 
+#[cfg(not(test))]
 use crate::intrinsics;
+#[cfg(not(test))]
 use crate::sys::cmath;
 
 #[allow(deprecated, deprecated_in_future)]
@@ -40,6 +42,7 @@ pub use core::f64::{
     MIN_EXP, MIN_POSITIVE, NAN, NEG_INFINITY, RADIX,
 };
 
+#[cfg(not(test))]
 impl f64 {
     /// Returns the largest integer less than or equal to `self`.
     ///
@@ -170,29 +173,6 @@ impl f64 {
         self - self.trunc()
     }
 
-    /// Computes the absolute value of `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let x = 3.5_f64;
-    /// let y = -3.5_f64;
-    ///
-    /// let abs_difference_x = (x.abs() - x).abs();
-    /// let abs_difference_y = (y.abs() - (-y)).abs();
-    ///
-    /// assert!(abs_difference_x < 1e-10);
-    /// assert!(abs_difference_y < 1e-10);
-    ///
-    /// assert!(f64::NAN.abs().is_nan());
-    /// ```
-    #[rustc_allow_incoherent_impl]
-    #[must_use = "method returns a new number and does not mutate the original value"]
-    #[inline]
-    pub fn abs(self) -> f64 {
-        unsafe { intrinsics::fabsf64(self) }
-    }
-
     /// Returns a number that represents the sign of `self`.
     ///
     /// - `1.0` if the number is positive, `+0.0` or `INFINITY`
@@ -216,33 +196,6 @@ impl f64 {
         if self.is_nan() { Self::NAN } else { 1.0_f64.copysign(self) }
     }
 
-    /// Returns a number composed of the magnitude of `self` and the sign of
-    /// `sign`.
-    ///
-    /// Equal to `self` if the sign of `self` and `sign` are the same, otherwise
-    /// equal to `-self`. If `self` is a NaN, then a NaN with the sign bit of
-    /// `sign` is returned. Note, however, that conserving the sign bit on NaN
-    /// across arithmetical operations is not generally guaranteed.
-    /// See [explanation of NaN as a special value](primitive@f32) for more info.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let f = 3.5_f64;
-    ///
-    /// assert_eq!(f.copysign(0.42), 3.5_f64);
-    /// assert_eq!(f.copysign(-0.42), -3.5_f64);
-    /// assert_eq!((-f).copysign(0.42), 3.5_f64);
-    /// assert_eq!((-f).copysign(-0.42), -3.5_f64);
-    ///
-    /// assert!(f64::NAN.copysign(1.0).is_nan());
-    /// ```
-    #[rustc_allow_incoherent_impl]
-    #[must_use = "method returns a new number and does not mutate the original value"]
-    #[inline]
-    pub fn copysign(self, sign: f64) -> f64 {
-        unsafe { intrinsics::copysignf64(self, sign) }
-    }
 
     /// Fused multiply-add. Computes `(self * a) + b` with only one rounding
     /// error, yielding a more accurate result than an unfused multiply-add.
@@ -327,7 +280,11 @@ impl f64 {
     #[inline]
     pub fn rem_euclid(self, rhs: f64) -> f64 {
         let r = self % rhs;
-        if r < 0.0 { r + rhs.abs() } else { r }
+        if r < 0.0 {
+            r + rhs.abs()
+        } else {
+            r
+        }
     }
 
     /// Raises a number to an integer power.
@@ -883,9 +840,11 @@ impl f64 {
     #[must_use = "method returns a new number and does not mutate the original value"]
     #[inline]
     pub fn asinh(self) -> f64 {
-        let ax = self.abs();
+        let ax = unsafe { intrinsics::fabsf64(self) };
         let ix = 1.0 / ax;
-        (ax + (ax / (Self::hypot(1.0, ix) + ix))).ln_1p().copysign(self)
+        (ax + (ax / (Self::hypot(1.0, ix) + ix)))
+            .ln_1p()
+            .copysign(self)
     }
 
     /// Inverse hyperbolic cosine function.

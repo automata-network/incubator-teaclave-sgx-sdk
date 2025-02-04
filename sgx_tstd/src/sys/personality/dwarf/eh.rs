@@ -142,7 +142,7 @@ pub unsafe fn find_eh_action(lsda: *const u8, context: &EHContext<'_>) -> Result
                 // Can never have null landing pad for sjlj -- that would have
                 // been indicated by a -1 call site index.
                 // FIXME(strict provenance)
-                let lpad = ptr::from_exposed_addr((cs_lpad + 1) as usize);
+                let lpad = (cs_lpad + 1) as *const u8;
                 return Ok(interpret_cs_action(action_table, cs_action_entry, lpad));
             }
         }
@@ -177,7 +177,11 @@ unsafe fn interpret_cs_action(
 
 #[inline]
 fn round_up(unrounded: usize, align: usize) -> Result<usize, ()> {
-    if align.is_power_of_two() { Ok((unrounded + align - 1) & !(align - 1)) } else { Err(()) }
+    if align.is_power_of_two() {
+        Ok((unrounded + align - 1) & !(align - 1))
+    } else {
+        Err(())
+    }
 }
 
 /// Read a offset (`usize`) from `reader` whose encoding is described by `encoding`.
@@ -247,8 +251,9 @@ unsafe fn read_encoded_pointer(
         DW_EH_PE_datarel => (*context.get_data_start)(),
         // aligned means the value is aligned to the size of a pointer
         DW_EH_PE_aligned => {
-            reader.ptr =
-                reader.ptr.with_addr(round_up(reader.ptr.addr(), mem::size_of::<*const u8>())?);
+            reader.ptr = reader
+                .ptr
+                .with_addr(round_up(reader.ptr.addr(), mem::size_of::<*const u8>())?);
             core::ptr::null()
         }
         _ => return Err(()),

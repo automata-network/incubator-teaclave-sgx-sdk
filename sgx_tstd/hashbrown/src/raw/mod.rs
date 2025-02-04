@@ -59,11 +59,11 @@ use core::intrinsics::{likely, unlikely};
 
 // Use strict provenance functions if available.
 #[cfg(feature = "nightly")]
-use core::ptr::invalid_mut;
+use core::ptr::without_provenance_mut;
 // Implement it with a cast otherwise.
 #[cfg(not(feature = "nightly"))]
 #[inline(always)]
-fn invalid_mut<T>(addr: usize) -> *mut T {
+fn without_provenance_mut<T>(addr: usize) -> *mut T {
     addr as *mut T
 }
 
@@ -379,7 +379,7 @@ impl<T> Bucket<T> {
             // won't overflow because index must be less than length (bucket_mask)
             // and bucket_mask is guaranteed to be less than `isize::MAX`
             // (see TableLayout::calculate_layout_for method)
-            invalid_mut(index + 1)
+            without_provenance_mut(index + 1)
         } else {
             base.as_ptr().sub(index)
         };
@@ -516,7 +516,7 @@ impl<T> Bucket<T> {
         if T::IS_ZERO_SIZED {
             // Just return an arbitrary ZST pointer which is properly aligned
             // invalid pointer is good enough for ZST
-            invalid_mut(mem::align_of::<T>())
+            without_provenance_mut(mem::align_of::<T>())
         } else {
             unsafe { self.ptr.as_ptr().sub(1) }
         }
@@ -563,7 +563,7 @@ impl<T> Bucket<T> {
     unsafe fn next_n(&self, offset: usize) -> Self {
         let ptr = if T::IS_ZERO_SIZED {
             // invalid pointer is good enough for ZST
-            invalid_mut(self.ptr.as_ptr() as usize + offset)
+            without_provenance_mut(self.ptr.as_ptr() as usize + offset)
         } else {
             self.ptr.as_ptr().sub(offset)
         };
@@ -4528,7 +4528,7 @@ mod test_map {
     /// AN UNINITIALIZED TABLE DURING THE DROP
     #[test]
     fn test_drop_uninitialized() {
-        use ::alloc::vec::Vec;
+        use alloc::vec::Vec;
 
         let table = unsafe {
             // SAFETY: The `buckets` is power of two and we're not
@@ -4543,7 +4543,7 @@ mod test_map {
     /// ARE ZERO, EVEN IF WE HAVE `FULL` CONTROL BYTES.
     #[test]
     fn test_drop_zero_items() {
-        use ::alloc::vec::Vec;
+        use alloc::vec::Vec;
         unsafe {
             // SAFETY: The `buckets` is power of two and we're not
             // trying to actually use the returned RawTable.
@@ -4591,8 +4591,8 @@ mod test_map {
     /// ARE ZERO, EVEN IF WE HAVE `FULL` CONTROL BYTES.
     #[test]
     fn test_catch_panic_clone_from() {
-        use ::alloc::sync::Arc;
-        use ::alloc::vec::Vec;
+        use alloc::sync::Arc;
+        use alloc::vec::Vec;
         use allocator_api2::alloc::{AllocError, Allocator, Global};
         use core::sync::atomic::{AtomicI8, Ordering};
         use std::thread;

@@ -170,29 +170,6 @@ impl f32 {
         self - self.trunc()
     }
 
-    /// Computes the absolute value of `self`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let x = 3.5_f32;
-    /// let y = -3.5_f32;
-    ///
-    /// let abs_difference_x = (x.abs() - x).abs();
-    /// let abs_difference_y = (y.abs() - (-y)).abs();
-    ///
-    /// assert!(abs_difference_x <= f32::EPSILON);
-    /// assert!(abs_difference_y <= f32::EPSILON);
-    ///
-    /// assert!(f32::NAN.abs().is_nan());
-    /// ```
-    #[rustc_allow_incoherent_impl]
-    #[must_use = "method returns a new number and does not mutate the original value"]
-    #[inline]
-    pub fn abs(self) -> f32 {
-        unsafe { intrinsics::fabsf32(self) }
-    }
-
     /// Returns a number that represents the sign of `self`.
     ///
     /// - `1.0` if the number is positive, `+0.0` or `INFINITY`
@@ -213,35 +190,11 @@ impl f32 {
     #[must_use = "method returns a new number and does not mutate the original value"]
     #[inline]
     pub fn signum(self) -> f32 {
-        if self.is_nan() { Self::NAN } else { 1.0_f32.copysign(self) }
-    }
-
-    /// Returns a number composed of the magnitude of `self` and the sign of
-    /// `sign`.
-    ///
-    /// Equal to `self` if the sign of `self` and `sign` are the same, otherwise
-    /// equal to `-self`. If `self` is a NaN, then a NaN with the sign bit of
-    /// `sign` is returned. Note, however, that conserving the sign bit on NaN
-    /// across arithmetical operations is not generally guaranteed.
-    /// See [explanation of NaN as a special value](primitive@f32) for more info.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let f = 3.5_f32;
-    ///
-    /// assert_eq!(f.copysign(0.42), 3.5_f32);
-    /// assert_eq!(f.copysign(-0.42), -3.5_f32);
-    /// assert_eq!((-f).copysign(0.42), 3.5_f32);
-    /// assert_eq!((-f).copysign(-0.42), -3.5_f32);
-    ///
-    /// assert!(f32::NAN.copysign(1.0).is_nan());
-    /// ```
-    #[rustc_allow_incoherent_impl]
-    #[must_use = "method returns a new number and does not mutate the original value"]
-    #[inline]
-    pub fn copysign(self, sign: f32) -> f32 {
-        unsafe { intrinsics::copysignf32(self, sign) }
+        if self.is_nan() {
+            Self::NAN
+        } else {
+            1.0_f32.copysign(self)
+        }
     }
 
     /// Fused multiply-add. Computes `(self * a) + b` with only one rounding
@@ -327,7 +280,11 @@ impl f32 {
     #[inline]
     pub fn rem_euclid(self, rhs: f32) -> f32 {
         let r = self % rhs;
-        if r < 0.0 { r + rhs.abs() } else { r }
+        if r < 0.0 {
+            r + rhs.abs()
+        } else {
+            r
+        }
     }
 
     /// Raises a number to an integer power.
@@ -883,9 +840,11 @@ impl f32 {
     #[must_use = "method returns a new number and does not mutate the original value"]
     #[inline]
     pub fn asinh(self) -> f32 {
-        let ax = self.abs();
+        let ax = unsafe { intrinsics::fabsf32(self) };
         let ix = 1.0 / ax;
-        (ax + (ax / (Self::hypot(1.0, ix) + ix))).ln_1p().copysign(self)
+        (ax + (ax / (Self::hypot(1.0, ix) + ix)))
+            .ln_1p()
+            .copysign(self)
     }
 
     /// Inverse hyperbolic cosine function.

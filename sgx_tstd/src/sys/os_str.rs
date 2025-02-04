@@ -28,8 +28,6 @@ use crate::str;
 use crate::sync::Arc;
 use crate::sys_common::{AsInner, IntoInner};
 
-use core::str::Utf8Chunks;
-
 #[cfg(feature = "unit_test")]
 mod tests;
 
@@ -46,7 +44,7 @@ pub struct Slice {
 
 impl fmt::Debug for Slice {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(&Utf8Chunks::new(&self.inner).debug(), f)
+        fmt::Debug::fmt(&self.inner.utf8_chunks().debug(), f)
     }
 }
 
@@ -58,7 +56,7 @@ impl fmt::Display for Slice {
             return "".fmt(f);
         }
 
-        for chunk in Utf8Chunks::new(&self.inner) {
+        for chunk in self.inner.utf8_chunks() {
             let valid = chunk.valid();
             // If we successfully decoded the whole chunk as a valid string then
             // we can return a direct formatting of the string which will also
@@ -89,7 +87,9 @@ impl fmt::Display for Buf {
 impl Clone for Buf {
     #[inline]
     fn clone(&self) -> Self {
-        Buf { inner: self.inner.clone() }
+        Buf {
+            inner: self.inner.clone(),
+        }
     }
 
     #[inline]
@@ -123,12 +123,16 @@ impl Buf {
     }
 
     pub fn from_string(s: String) -> Buf {
-        Buf { inner: s.into_bytes() }
+        Buf {
+            inner: s.into_bytes(),
+        }
     }
 
     #[inline]
     pub fn with_capacity(capacity: usize) -> Buf {
-        Buf { inner: Vec::with_capacity(capacity) }
+        Buf {
+            inner: Vec::with_capacity(capacity),
+        }
     }
 
     #[inline]
@@ -188,7 +192,9 @@ impl Buf {
     }
 
     pub fn into_string(self) -> Result<String, Buf> {
-        String::from_utf8(self.inner).map_err(|p| Buf { inner: p.into_bytes() })
+        String::from_utf8(self.inner).map_err(|p| Buf {
+            inner: p.into_bytes(),
+        })
     }
 
     pub fn push_slice(&mut self, s: &Slice) {
@@ -203,7 +209,9 @@ impl Buf {
     #[inline]
     pub fn from_box(boxed: Box<Slice>) -> Buf {
         let inner: Box<[u8]> = unsafe { mem::transmute(boxed) };
-        Buf { inner: inner.into_vec() }
+        Buf {
+            inner: inner.into_vec(),
+        }
     }
 
     #[inline]
@@ -242,7 +250,9 @@ impl Slice {
     }
 
     pub fn to_owned(&self) -> Buf {
-        Buf { inner: self.inner.to_vec() }
+        Buf {
+            inner: self.inner.to_vec(),
+        }
     }
 
     pub fn clone_into(&self, buf: &mut Buf) {
@@ -284,12 +294,16 @@ impl Slice {
 
     #[inline]
     pub fn to_ascii_lowercase(&self) -> Buf {
-        Buf { inner: self.inner.to_ascii_lowercase() }
+        Buf {
+            inner: self.inner.to_ascii_lowercase(),
+        }
     }
 
     #[inline]
     pub fn to_ascii_uppercase(&self) -> Buf {
-        Buf { inner: self.inner.to_ascii_uppercase() }
+        Buf {
+            inner: self.inner.to_ascii_uppercase(),
+        }
     }
 
     #[inline]

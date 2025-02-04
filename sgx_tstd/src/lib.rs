@@ -32,7 +32,6 @@
 
 #![no_std]
 #![cfg_attr(target_vendor = "teaclave", feature(rustc_private))]
-
 #![needs_panic_runtime]
 #![allow(non_camel_case_types)]
 #![allow(unused_must_use)]
@@ -41,7 +40,7 @@
 #![allow(incomplete_features)]
 #![allow(internal_features)]
 #![allow(unused_assignments)]
- #![allow(unused_features)]
+#![allow(unused_features)]
 #![allow(clippy::assertions_on_constants)]
 #![allow(clippy::err_expect)]
 #![allow(clippy::explicit_auto_deref)]
@@ -55,16 +54,13 @@
 #![allow(clippy::transmute_ptr_to_ptr)]
 #![allow(clippy::wrong_self_convention)]
 #![allow(clippy::unused_io_amount)]
-
 //
 // Language features:
 #![feature(alloc_error_handler)]
 #![feature(allocator_internals)]
 #![feature(allow_internal_unsafe)]
 #![feature(allow_internal_unstable)]
-#![feature(c_unwind)]
 #![feature(concat_idents)]
-#![feature(const_mut_refs)]
 #![feature(const_trait_impl)]
 #![feature(decl_macro)]
 #![feature(dropck_eyepatch)]
@@ -81,7 +77,6 @@
 #![feature(thread_local)]
 #![feature(try_blocks)]
 #![feature(type_alias_impl_trait)]
-#![feature(utf8_chunks)]
 //
 // Library features (core):
 // tidy-alphabetical-start
@@ -90,7 +85,6 @@
 #![feature(core_io_borrowed_buf)]
 #![feature(duration_constants)]
 #![feature(error_generic_member_access)]
-#![feature(error_in_core)]
 #![feature(error_iter)]
 #![feature(exact_size_is_empty)]
 #![feature(exclusive_wrapper)]
@@ -103,16 +97,13 @@
 #![feature(maybe_uninit_uninit_array)]
 #![feature(maybe_uninit_write_slice)]
 #![feature(panic_can_unwind)]
-#![feature(panic_info_message)]
 #![feature(panic_internals)]
-#![feature(prelude_2024)]
 #![feature(ptr_as_uninit)]
 #![feature(slice_internals)]
 #![feature(std_internals)]
 #![feature(str_internals)]
-#![feature(strict_provenance)]
-#![feature(exposed_provenance)]
 #![feature(type_ascription)]
+#![feature(formatting_options)]
 // tidy-alphabetical-end
 //
 // Library features (alloc):
@@ -120,7 +111,6 @@
 #![feature(allocator_api)]
 #![feature(get_mut_unchecked)]
 #![feature(map_try_insert)]
-#![feature(new_uninit)]
 #![feature(slice_concat_trait)]
 #![feature(try_reserve_kind)]
 #![feature(vec_into_raw_parts)]
@@ -143,7 +133,6 @@
 #![feature(custom_test_frameworks)]
 #![feature(edition_panic)]
 #![feature(format_args_nl)]
-#![feature(lazy_cell)]
 #![feature(log_syntax)]
 #![feature(test)]
 #![feature(trace_macros)]
@@ -153,10 +142,8 @@
 //
 // Only for const-ness:
 // tidy-alphabetical-start
-#![feature(const_hash)]
 // tidy-alphabetical-end
 //
-
 #![default_lib_allocator]
 
 // Explicitly import the prelude. The compiler uses this same unstable attribute
@@ -172,12 +159,12 @@ extern crate hashbrown;
 extern crate alloc as alloc_crate;
 
 // We always need an unwinder currently for backtraces
-extern crate sgx_unwind;
+extern crate sgx_alloc;
 #[cfg(feature = "backtrace")]
 extern crate sgx_backtrace_sys;
 #[cfg(feature = "backtrace")]
 extern crate sgx_demangle;
-extern crate sgx_alloc;
+extern crate sgx_unwind;
 
 #[macro_use]
 extern crate sgx_types;
@@ -254,6 +241,7 @@ pub mod ascii;
 #[cfg(feature = "backtrace")]
 pub mod backtrace;
 pub mod collections;
+pub mod enclave;
 pub mod env;
 pub mod error;
 pub mod ffi;
@@ -270,9 +258,7 @@ pub mod path;
 pub mod process;
 pub mod sync;
 pub mod time;
-pub mod enclave;
 pub mod untrusted;
-
 
 pub mod task {
     //! Types and Traits for working with asynchronous tasks.
@@ -312,7 +298,7 @@ mod fs;
 // Re-export macros defined in core.
 #[allow(deprecated, deprecated_in_future)]
 pub use core::{
-    assert_eq, assert_ne, debug_assert, debug_assert_eq, debug_assert_ne, matches, todo, r#try,
+    assert_eq, assert_ne, debug_assert, debug_assert_eq, debug_assert_ne, matches, r#try, todo,
     unimplemented, unreachable, write, writeln,
 };
 

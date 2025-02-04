@@ -68,7 +68,7 @@ pub use core::panic::{AssertUnwindSafe, RefUnwindSafe, UnwindSafe};
 /// See the [`panic!`] macro for more information about panicking.
 #[inline]
 #[track_caller]
-pub fn panic_any<M: 'static + Any + Send>(msg: M) -> ! {
+pub fn panic_any<M: 'static + Any + Send + core::fmt::Display>(msg: M) -> ! {
     crate::panicking::begin_panic(msg);
 }
 
