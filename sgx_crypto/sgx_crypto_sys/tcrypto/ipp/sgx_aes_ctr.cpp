@@ -29,11 +29,38 @@
  *
  */
 
-#include "sgx_tcrypto.h"
-#include "ippcp.h"
 #include "ipp_wrapper.h"
 #include "stdlib.h"
 #include "string.h"
+#include "sgx_fips_internal.h"
+
+static void fips_self_test_aes_ctr()
+{
+    static bool fips_selftest_aes_ctr_flag = false;
+
+    if (g_global_data.fips_on != 0 && fips_selftest_aes_ctr_flag == false)
+    {
+        sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+        fips_test_status test_result = IPPCP_ALGO_SELFTEST_OK;
+        int buf_size = 0;
+        uint8_t *p_buf = NULL;
+        do
+        {
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsAESEncryptDecrypt_get_size, &buf_size);
+            p_buf = (uint8_t *)malloc(buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsAESEncryptCTR, p_buf);
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsAESDecryptCTR, p_buf);
+            ret = SGX_SUCCESS;
+            fips_selftest_aes_ctr_flag = true;
+        } while (0);
+        SAFE_FREE(p_buf);
+
+        ERROR_ABORT(ret);
+    }
+    return;
+}
 
 /* AES-CTR 128-bit
  * Parameters:
@@ -53,13 +80,15 @@ sgx_status_t sgx_aes_ctr_encrypt(const sgx_aes_ctr_128bit_key_t *p_key, const ui
                                 uint8_t *p_dst)
 {
     IppStatus error_code = ippStsNoErr;
-    IppsAESSpec* ptr_ctx = NULL;
+    IppsAESSpec *ptr_ctx = NULL;
     int ctx_size = 0;
 
     if ((p_key == NULL) || (p_src == NULL) || (p_ctr == NULL) || (p_dst == NULL))
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_aes_ctr();
 
     // AES-CTR-128 encryption
     error_code = ippsAESGetSize(&ctx_size);
@@ -120,6 +149,8 @@ sgx_status_t sgx_aes_ctr_decrypt(const sgx_aes_ctr_128bit_key_t *p_key, const ui
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_aes_ctr();
 
     // AES-CTR-128 encryption
     error_code = ippsAESGetSize(&ctx_size);

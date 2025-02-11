@@ -34,6 +34,33 @@
 #include "ipp_wrapper.h"
 #include "stdlib.h"
 #include "string.h"
+#include "sgx_fips_internal.h"
+
+static void fips_self_test_hmac()
+{
+    static bool fips_selftest_hmac_flag = false;
+
+    if (g_global_data.fips_on != 0 && fips_selftest_hmac_flag == false)
+    {
+        sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+        fips_test_status test_result = IPPCP_ALGO_SELFTEST_OK;
+        int buf_size = 0;
+        uint8_t *p_buf = NULL;
+        do
+        {
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsHMAC_rmf_get_size, &buf_size);
+            p_buf = (uint8_t *)malloc(buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsHMACUpdate_rmf, p_buf);
+            FIPS_SELFTEST_FUNC(test_result, fips_selftest_ippsHMACMessage_rmf);
+            fips_selftest_hmac_flag = true;
+            ret = SGX_SUCCESS;
+        } while (0);
+        SAFE_FREE(p_buf);
+        ERROR_ABORT(ret);
+    }
+    return;
+}
 
  /* Message Authentication - HMAC 256
  * Parameters:
@@ -51,7 +78,10 @@ sgx_status_t sgx_hmac_sha256_msg(const unsigned char *p_src, int src_len, const 
     if ((p_src == NULL) || (p_key == NULL) || (p_mac == NULL) || (src_len <= 0) || (key_len <= 0) || (mac_len <= 0))  {
         return SGX_ERROR_INVALID_PARAMETER;
     }
-    
+
+    fips_self_test_hmac();
+    fips_self_test_hash256();
+
     sgx_status_t ret = SGX_ERROR_UNEXPECTED;
     IppStatus ipp_ret = ippStsNoErr;
 
@@ -63,9 +93,9 @@ sgx_status_t sgx_hmac_sha256_msg(const unsigned char *p_src, int src_len, const 
     } while (0);
 
     if (ret != SGX_SUCCESS) {
-        memset_s(p_mac, mac_len, 0, mac_len); 
+        memset_s(p_mac, mac_len, 0, mac_len);
     }
-    
+
     return ret;
 }
 
@@ -81,6 +111,9 @@ sgx_status_t sgx_hmac_sha256_init(const unsigned char *p_key, int key_len, sgx_h
     if ((p_key == NULL) || (key_len <= 0) || (p_hmac_handle == NULL)) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hmac();
+    fips_self_test_hash256();
 
     IppStatus ipp_ret = ippStsNoErr;
     sgx_status_t ret = SGX_ERROR_UNEXPECTED;
@@ -107,7 +140,7 @@ sgx_status_t sgx_hmac_sha256_init(const unsigned char *p_key, int key_len, sgx_h
     if (ret != SGX_SUCCESS) {
         sgx_hmac_sha256_close((sgx_hmac_state_handle_t)pState);
     }
-    
+
     return ret;
 }
 
@@ -123,6 +156,10 @@ sgx_status_t sgx_hmac_sha256_update(const uint8_t *p_src, int src_len, sgx_hmac_
     if ((p_src == NULL) || (src_len <= 0) || (hmac_handle == NULL)) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hmac();
+    fips_self_test_hash256();
+
     IppStatus ipp_ret = ippStsNoErr;
 
     ipp_ret = ippsHMACUpdate_rmf(p_src, (int)src_len, (IppsHMACState_rmf*)hmac_handle);
@@ -144,6 +181,10 @@ sgx_status_t sgx_hmac_sha256_final(unsigned char *p_hash, int hash_len, sgx_hmac
     if ((p_hash == NULL) || (hash_len <= 0) || (hmac_handle == NULL)) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hmac();
+    fips_self_test_hash256();
+
     IppStatus ipp_ret = ippStsNoErr;
 
     ipp_ret = ippsHMACFinal_rmf(p_hash, hash_len, (IppsHMACState_rmf*)hmac_handle);
@@ -165,7 +206,7 @@ sgx_status_t sgx_hmac_sha256_close(sgx_hmac_state_handle_t hmac_handle)
     if (hmac_handle == NULL) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
-    
+
     int size = 0;
     IppStatus ipp_ret = ippsHMACGetSize_rmf(&size);
     if (ipp_ret != ippStsNoErr)

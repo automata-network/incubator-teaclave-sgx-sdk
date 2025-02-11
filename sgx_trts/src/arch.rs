@@ -398,6 +398,8 @@ pub struct Global {
     pub elrange_start_base: u64,
     pub elrange_size: u64,
     pub edmm_bk_overhead: usize, // added in 2.20
+    pub fips_on: u32,
+    pub reserved2: u32,
 }
 
 #[repr(C, packed)]

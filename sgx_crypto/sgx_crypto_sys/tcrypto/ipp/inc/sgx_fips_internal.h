@@ -29,39 +29,50 @@
  *
  */
 
+#pragma once
+
 #include "sgx_tcrypto.h"
 #include "ippcp.h"
-#include "stdlib.h"
-#include "sgx_fips_internal.h"
+#include "ippcp/fips_cert.h"
+#include "global_data.h"
 
-#ifndef SAFE_FREE
-#define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr)=NULL;}}
-#endif
-
-
-/* SHA Hashing functions
-* Parameters:
-*   Return: sgx_status_t  - SGX_SUCCESS or failure as defined sgx_error.h
-*   Inputs: uint8_t *p_src - Pointer to input stream to be hashed
-*           uint32_t src_len - Length of input stream to be hashed
-*   Output: sgx_sha256_hash_t *p_hash - Resultant hash from operation */
-sgx_status_t sgx_sha256_msg(const uint8_t *p_src, uint32_t src_len, sgx_sha256_hash_t *p_hash)
-{
-    if ((p_src == NULL) || (p_hash == NULL))
-    {
-        return SGX_ERROR_INVALID_PARAMETER;
+#define ERROR_SELFTEST_BREAK(test_result)     \
+    if (test_result != IPPCP_ALGO_SELFTEST_OK) \
+    {                                          \
+        break;                                 \
+    }
+#define ALLOC_ERROR_BREAK(pointer, ret)  \
+    if (pointer == NULL)                 \
+    {                                  \
+        ret = SGX_ERROR_OUT_OF_MEMORY; \
+        break;                         \
     }
 
-    fips_self_test_hash256();
+#define FIPS_SELFTEST_FUNC(result, func) \
+    result = func();                     \
+    ERROR_SELFTEST_BREAK(result)
 
-    IppStatus ipp_ret = ippStsNoErr;
-    ipp_ret = ippsHashMessage_rmf((const Ipp8u *) p_src, src_len, (Ipp8u *)p_hash, ippsHashMethod_SHA256_TT());
-    switch (ipp_ret)
-    {
-    case ippStsNoErr: return SGX_SUCCESS;
-    case ippStsMemAllocErr: return SGX_ERROR_OUT_OF_MEMORY;
-    case ippStsNullPtrErr:
-    case ippStsLengthErr: return SGX_ERROR_INVALID_PARAMETER;
-    default: return SGX_ERROR_UNEXPECTED;
+#define FIPS_SELFTEST_FUNC_1(result, func, para) \
+    result = func(para);                       \
+    ERROR_SELFTEST_BREAK(result)
+
+#define FIPS_SELFTEST_FUNC_2(result, func, para1, para2) \
+    result = func(para1, para2);\
+    ERROR_SELFTEST_BREAK(result)
+
+#define FIPS_SELFTEST_FUNC_3(result, func, para1, para2, para3) \
+    result = func(para1, para2, para3);\
+    ERROR_SELFTEST_BREAK(result)
+
+#define ERROR_ABORT(ret)               \
+    {                                  \
+        if (ret != SGX_SUCCESS)        \
+        {                              \
+            g_global_data.fips_on = 0; \
+            abort();                   \
+        }                              \
     }
-}
+
+void fips_self_test_ecc();
+void fips_self_test_hash256();
+void fips_self_test_hash384();

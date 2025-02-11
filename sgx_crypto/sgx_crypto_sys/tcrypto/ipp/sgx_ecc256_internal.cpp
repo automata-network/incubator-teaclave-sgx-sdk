@@ -31,6 +31,7 @@
 
 #include "ipp_wrapper.h"
 #include "sgx_ecc256_internal.h"
+#include "sgx_fips_internal.h"
 
 /* Computes a point with scalar multiplication based on private B key (local) and remote public Ga Key
  * Parameters:
@@ -49,6 +50,7 @@ sgx_status_t sgx_ecc256_compute_shared_point(sgx_ec256_private_t *p_private_b,
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+    fips_self_test_ecc();
 
     IppsBigNumState*    BN_dh_privB = NULL;
     IppsBigNumState*    BN_dh_shared_x = NULL;
@@ -165,4 +167,3 @@ sgx_status_t sgx_ecc256_compute_shared_point(sgx_ec256_private_t *p_private_b,
     }
     return SGX_SUCCESS;
 }
-

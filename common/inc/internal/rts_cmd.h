@@ -29,39 +29,21 @@
  *
  */
 
-#include "sgx_tcrypto.h"
-#include "ippcp.h"
-#include "stdlib.h"
-#include "sgx_fips_internal.h"
+/* ECALL command */
+#define ECMD_ECALL           0
+#define ECMD_INIT_ENCLAVE   -1
+#define ECMD_ORET           -2
+#define ECMD_EXCEPT         -3
+#define ECMD_MKTCS          -4
+#define ECMD_UNINIT_ENCLAVE -5
 
-#ifndef SAFE_FREE
-#define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr)=NULL;}}
-#endif
 
+#define ECMD_ECALL_PTHREAD  (-6)
 
-/* SHA Hashing functions
-* Parameters:
-*   Return: sgx_status_t  - SGX_SUCCESS or failure as defined sgx_error.h
-*   Inputs: uint8_t *p_src - Pointer to input stream to be hashed
-*           uint32_t src_len - Length of input stream to be hashed
-*   Output: sgx_sha256_hash_t *p_hash - Resultant hash from operation */
-sgx_status_t sgx_sha256_msg(const uint8_t *p_src, uint32_t src_len, sgx_sha256_hash_t *p_hash)
-{
-    if ((p_src == NULL) || (p_hash == NULL))
-    {
-        return SGX_ERROR_INVALID_PARAMETER;
-    }
+/* Reserved for 3rd party usage */
+#define RESERVED_FOR_3RD_PARTY_START -100
+#define RESERVED_FOR_3RD_PARTY_END -1000
 
-    fips_self_test_hash256();
+/* OCALL command */
+#define OCMD_ERET         -1
 
-    IppStatus ipp_ret = ippStsNoErr;
-    ipp_ret = ippsHashMessage_rmf((const Ipp8u *) p_src, src_len, (Ipp8u *)p_hash, ippsHashMethod_SHA256_TT());
-    switch (ipp_ret)
-    {
-    case ippStsNoErr: return SGX_SUCCESS;
-    case ippStsMemAllocErr: return SGX_ERROR_OUT_OF_MEMORY;
-    case ippStsNullPtrErr:
-    case ippStsLengthErr: return SGX_ERROR_INVALID_PARAMETER;
-    default: return SGX_ERROR_UNEXPECTED;
-    }
-}

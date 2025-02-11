@@ -42,6 +42,47 @@
 #include "sgx_error.h"
 #include "sgx_trts.h"
 #include "ipp_wrapper.h"
+#include "sgx_fips_internal.h"
+
+void fips_self_test_rsa_encrypt_decrypt()
+{
+    static bool fips_selftest_rsa_encrypt_decrypt = false;
+
+    if (g_global_data.fips_on != 0 && fips_selftest_rsa_encrypt_decrypt == false)
+    {
+        sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+        fips_test_status test_result = IPPCP_ALGO_SELFTEST_OK;
+        int buf_size = 0;
+        uint8_t *p_buf = NULL;
+        int key_buf_size = 0;
+        uint8_t *p_key_buf = NULL;
+        do
+        {
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsRSAEncryptDecrypt_OAEP_rmf_get_size_keys, &key_buf_size);
+            p_key_buf = (uint8_t *)malloc(key_buf_size);
+            ALLOC_ERROR_BREAK(p_key_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSAEncryptDecrypt_OAEP_rmf_get_size, &buf_size, p_key_buf);
+            p_buf = (uint8_t *)malloc(buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSAEncrypt_OAEP_rmf, p_buf, p_key_buf);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSADecrypt_OAEP_rmf, p_buf, p_key_buf);
+
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsRSASignVerify_PSS_rmf_get_size_keys, &key_buf_size);
+            p_key_buf = (uint8_t *)realloc(p_key_buf, key_buf_size);
+            ALLOC_ERROR_BREAK(p_key_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSASignVerify_PSS_rmf_get_size, &buf_size, p_key_buf);
+            p_buf = (uint8_t *)realloc(p_buf, buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSA_GenerateKeys, p_buf, p_key_buf);
+            ret = SGX_SUCCESS;
+            fips_selftest_rsa_encrypt_decrypt = true;
+        } while (0);
+        SAFE_FREE(p_buf);
+        SAFE_FREE(p_key_buf);
+        ERROR_ABORT(ret);
+    }
+    return;
+}
 
 sgx_status_t sgx_create_rsa_key_pair(int n_byte_size, int e_byte_size, unsigned char *p_n, unsigned char *p_d, unsigned char *p_e,
     unsigned char *p_p, unsigned char *p_q, unsigned char *p_dmp1,
@@ -51,6 +92,8 @@ sgx_status_t sgx_create_rsa_key_pair(int n_byte_size, int e_byte_size, unsigned 
         p_p == NULL || p_q == NULL || p_dmp1 == NULL || p_dmq1 == NULL || p_iqmp == NULL) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_rsa_encrypt_decrypt();
 
     IppsRSAPrivateKeyState *p_pri_key = NULL;
     IppStatus error_code = ippStsNoErr;
@@ -216,6 +259,8 @@ sgx_status_t sgx_create_rsa_priv2_key(int mod_size, int exp_size, const unsigned
         return SGX_ERROR_INVALID_PARAMETER;
     }
 
+    fips_self_test_rsa_encrypt_decrypt();
+
     IppStatus error_code = ippStsNoErr;
     do {
 
@@ -276,6 +321,8 @@ sgx_status_t sgx_create_rsa_pub1_key(int mod_size, int exp_size, const unsigned 
         return SGX_ERROR_INVALID_PARAMETER;
     }
 
+    fips_self_test_rsa_encrypt_decrypt();
+
     IppsRSAPublicKeyState *p_pub_key = NULL;
     IppsBigNumState *p_n = NULL, *p_e = NULL;
     int rsa_size = 0;
@@ -330,6 +377,9 @@ sgx_status_t sgx_rsa_pub_encrypt_sha256(const void* rsa_key, unsigned char* pout
     if (rsa_key == NULL || pout_len == NULL || pin_data == NULL || pin_len < 1 || pin_len >= INT_MAX) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_rsa_encrypt_decrypt();
+    fips_self_test_hash256();
 
     IppsBigNumState* p_modulus = NULL;
     int mod_len = 0;
@@ -408,6 +458,9 @@ sgx_status_t sgx_rsa_priv_decrypt_sha256(const void* rsa_key, unsigned char* pou
         return SGX_ERROR_INVALID_PARAMETER;
     }
 
+    fips_self_test_rsa_encrypt_decrypt();
+    fips_self_test_hash256();
+
     IppsBigNumState* p_bn = NULL;
     int dataLen = 0;
     int factor = 1;
@@ -443,7 +496,7 @@ sgx_status_t sgx_rsa_priv_decrypt_sha256(const void* rsa_key, unsigned char* pou
         {
             break;
         }
-        
+
         // output buffer is NULL, return required pout_data buffer size
         //
         if (pout_data == NULL) {
@@ -495,6 +548,7 @@ sgx_status_t sgx_create_rsa_priv1_key(int n_byte_size, int e_byte_size, int d_by
         le_n == NULL || le_d == NULL) {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+    fips_self_test_rsa_encrypt_decrypt();
 
     IppsRSAPrivateKeyState *p_rsa1 = NULL;
     IppsBigNumState *p_n = NULL, *p_d = NULL;
@@ -550,6 +604,8 @@ sgx_status_t sgx_create_rsa_priv1_key(int n_byte_size, int e_byte_size, int d_by
 
 
 sgx_status_t sgx_free_rsa_key(void *p_rsa_key, sgx_rsa_key_type_t key_type, int mod_size, int exp_size) {
+
+    fips_self_test_rsa_encrypt_decrypt();
 	if (key_type == SGX_RSA_PRIVATE_KEY) {
 		(void)(exp_size);
 		secure_free_rsa_pri_key((IppsRSAPrivateKeyState*)p_rsa_key);

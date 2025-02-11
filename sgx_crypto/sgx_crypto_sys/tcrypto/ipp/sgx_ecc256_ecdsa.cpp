@@ -30,6 +30,7 @@
  */
 
 #include "ipp_wrapper.h"
+#include "sgx_fips_internal.h"
 
 const uint32_t sgx_nistp256_r[] = {
     0xFC632551, 0xF3B9CAC2, 0xA7179E84, 0xBCE6FAAD, 0xFFFFFFFF, 0xFFFFFFFF,
@@ -54,6 +55,9 @@ sgx_status_t sgx_ecdsa_sign(const uint8_t *p_data,
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hash256();
+    fips_self_test_ecc();
 
     IppStatus ipp_ret = ippStsNoErr;
     IppsECCPState* p_ecc_state = (IppsECCPState*)ecc_handle;
@@ -184,6 +188,8 @@ sgx_status_t sgx_ecdsa_verify(const uint8_t *p_data,
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+    fips_self_test_hash256();
+
     uint8_t hash[SGX_SHA256_HASH_SIZE] = { 0 };
 
     // Prepare the message used to sign.
@@ -205,6 +211,8 @@ sgx_status_t sgx_ecdsa_verify_hash(const uint8_t *hash,
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hash256();
 
     IppStatus ipp_ret = ippStsNoErr;
     IppsECCPState* p_ecc_state = (IppsECCPState*)ecc_handle;

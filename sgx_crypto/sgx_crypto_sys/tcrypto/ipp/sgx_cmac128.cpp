@@ -29,11 +29,35 @@
  *
  */
 
-#include "sgx_tcrypto.h"
-#include "ippcp.h"
 #include "ipp_wrapper.h"
 #include "stdlib.h"
 #include "string.h"
+#include "sgx_fips_internal.h"
+
+static void fips_self_test_cmac128()
+{
+    static bool fips_selftest_cmac128_flag = false;
+
+    if (g_global_data.fips_on != 0 && fips_selftest_cmac128_flag == false)
+    {
+        sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+        fips_test_status test_result = IPPCP_ALGO_SELFTEST_OK;
+        int buf_size = 0;
+        uint8_t *p_buf = NULL;
+        do
+        {
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsAES_CMAC_get_size, &buf_size);
+            p_buf = (uint8_t *)malloc(buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsAES_CMACUpdate, p_buf);
+            ret = SGX_SUCCESS;
+            fips_selftest_cmac128_flag = true;
+        } while (0);
+        SAFE_FREE(p_buf);
+        ERROR_ABORT(ret);
+    }
+    return;
+}
 
 /* Message Authentication - Rijndael 128 CMAC
 * Parameters:
@@ -53,6 +77,9 @@ sgx_status_t sgx_rijndael128_cmac_msg(const sgx_cmac_128bit_key_t *p_key, const 
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_cmac128();
+
     error_code = ippsAES_CMACGetSize(&ippStateSize);
     if (error_code != ippStsNoErr)
     {
@@ -138,6 +165,8 @@ sgx_status_t sgx_cmac128_init(const sgx_cmac_128bit_key_t *p_key, sgx_cmac_state
         return SGX_ERROR_INVALID_PARAMETER;
     }
 
+    fips_self_test_cmac128();
+
     IppsAES_CMACState* pState = NULL;
     int ippStateSize = 0;
     IppStatus error_code = ippStsNoErr;
@@ -182,6 +211,9 @@ sgx_status_t sgx_cmac128_update(const uint8_t *p_src, uint32_t src_len, sgx_cmac
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_cmac128();
+
     IppStatus error_code = ippStsNoErr;
     error_code = ippsAES_CMACUpdate(p_src, src_len, (IppsAES_CMACState*)cmac_handle);
     switch (error_code)
@@ -204,6 +236,9 @@ sgx_status_t sgx_cmac128_final(sgx_cmac_state_handle_t cmac_handle, sgx_cmac_128
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_cmac128();
+
     IppStatus error_code = ippStsNoErr;
     error_code = ippsAES_CMACFinal((Ipp8u *)p_hash, SGX_CMAC_MAC_SIZE, (IppsAES_CMACState*)cmac_handle);
     switch (error_code)

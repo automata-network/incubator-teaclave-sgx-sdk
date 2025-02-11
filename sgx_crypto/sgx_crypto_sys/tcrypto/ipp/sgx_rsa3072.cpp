@@ -30,6 +30,48 @@
  */
 
 #include "ipp_wrapper.h"
+#include "sgx_fips_internal.h"
+
+static void fips_self_test_rsa_sign_verify()
+{
+    static bool fips_selftest_rsa_sign_verify_flag = false;
+
+    if (g_global_data.fips_on != 0 && fips_selftest_rsa_sign_verify_flag == false)
+    {
+        sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+        fips_test_status test_result = IPPCP_ALGO_SELFTEST_OK;
+        int buf_size = 0;
+        uint8_t *p_buf = NULL;
+        int key_buf_size = 0;
+        uint8_t *p_key_buf = NULL;
+        do
+        {
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size_keys, &key_buf_size);
+            p_key_buf = (uint8_t *)malloc(key_buf_size);
+            ALLOC_ERROR_BREAK(p_key_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size, &buf_size, p_key_buf);
+            p_buf = (uint8_t *)malloc(buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSASign_PKCS1v15_rmf, p_buf, p_key_buf);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSAVerify_PKCS1v15_rmf, p_buf, p_key_buf);
+
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsRSASignVerify_PSS_rmf_get_size_keys, &key_buf_size);
+            p_key_buf = (uint8_t *)realloc(p_key_buf, key_buf_size);
+            ALLOC_ERROR_BREAK(p_key_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSASignVerify_PSS_rmf_get_size, &buf_size, p_key_buf);
+            p_buf = (uint8_t *)realloc(p_buf, buf_size);
+            ALLOC_ERROR_BREAK(p_buf, ret);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsRSA_GenerateKeys, p_buf, p_key_buf);
+            ret = SGX_SUCCESS;
+            fips_selftest_rsa_sign_verify_flag = true;
+
+        } while (0);
+        SAFE_FREE(p_buf);
+        SAFE_FREE(p_key_buf);
+        ERROR_ABORT(ret);
+    }
+    return;
+}
 
 sgx_status_t sgx_rsa3072_sign_ex(const uint8_t * p_data,
     uint32_t data_size,
@@ -42,6 +84,10 @@ sgx_status_t sgx_rsa3072_sign_ex(const uint8_t * p_data,
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_rsa_sign_verify();
+    fips_self_test_hash256();
+
     IppStatus ipp_ret = ippStsNoErr;
 
     IppsRSAPrivateKeyState* p_rsa_privatekey_ctx = NULL;
@@ -145,7 +191,7 @@ sgx_status_t sgx_rsa3072_sign_ex(const uint8_t * p_data,
     sgx_ipp_secure_free_BN(p_prikey_mod_bn, sizeof(p_key->mod));
     sgx_ipp_secure_free_BN(p_prikey_d_bn, sizeof(p_key->d));
     CLEAR_FREE_MEM(p_rsa_privatekey_ctx, private_key_ctx_size);
-    
+
     sgx_ipp_secure_free_BN(p_pubkey_mod_bn, sizeof(p_public->mod));
     sgx_ipp_secure_free_BN(p_pubkey_exp_bn, sizeof(p_public->exp));
     SAFE_FREE(p_rsa_publickey_ctx);
@@ -185,6 +231,10 @@ sgx_status_t sgx_rsa3072_verify(const uint8_t *p_data,
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_rsa_sign_verify();
+    fips_self_test_hash256();
+
     *p_result = SGX_RSA_INVALID_SIGNATURE;
 
     IppStatus ipp_ret = ippStsNoErr;

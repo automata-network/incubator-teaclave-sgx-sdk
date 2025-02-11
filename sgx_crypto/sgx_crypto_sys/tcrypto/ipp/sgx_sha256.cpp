@@ -32,11 +32,39 @@
 #include "ippcp.h"
 #include "sgx_tcrypto.h"
 #include "stdlib.h"
+#include "sgx_fips_internal.h"
 
 #ifndef SAFE_FREE
 #define SAFE_FREE(ptr) {if (NULL != (ptr)) {free(ptr); (ptr)=NULL;}}
 #endif
 
+void fips_self_test_hash256()
+{
+    static bool fips_selftest_hash256_flag = false;
+
+    if (g_global_data.fips_on != 0 && fips_selftest_hash256_flag == false)
+    {
+        sgx_status_t ret = SGX_ERROR_UNEXPECTED;
+        fips_test_status test_result = IPPCP_ALGO_SELFTEST_OK;
+        int buf_size = 0;
+        uint8_t *p_buf = NULL;
+
+        do
+        {
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsHash_rmf_get_size, &buf_size);
+            p_buf = (uint8_t *)malloc(buf_size);
+            FIPS_SELFTEST_FUNC_2(test_result, fips_selftest_ippsHashUpdate_rmf, (IppHashAlgId)ippHashAlg_SHA256, p_buf);
+            FIPS_SELFTEST_FUNC_1(test_result, fips_selftest_ippsHashMessage_rmf, (IppHashAlgId)ippHashAlg_SHA256);
+
+            ret = SGX_SUCCESS;
+            fips_selftest_hash256_flag = true;
+
+        } while (0);
+        SAFE_FREE(p_buf);
+        ERROR_ABORT(ret);
+    }
+    return;
+}
 
 /* Allocates and initializes sha256 state
 * Parameters:
@@ -49,6 +77,8 @@ sgx_status_t sgx_sha256_init(sgx_sha_state_handle_t* p_sha_handle)
 
     if (p_sha_handle == NULL)
         return SGX_ERROR_INVALID_PARAMETER;
+
+    fips_self_test_hash256();
 
     int ctx_size = 0;
     ipp_ret = ippsHashGetSize_rmf(&ctx_size);
@@ -86,6 +116,9 @@ sgx_status_t sgx_sha256_update(const uint8_t *p_src, uint32_t src_len, sgx_sha_s
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hash256();
+
     IppStatus ipp_ret = ippStsNoErr;
     ipp_ret = ippsHashUpdate_rmf(p_src, src_len, (IppsHashState_rmf*)sha_handle);
     switch (ipp_ret)
@@ -108,6 +141,9 @@ sgx_status_t sgx_sha256_get_hash(sgx_sha_state_handle_t sha_handle, sgx_sha256_h
     {
         return SGX_ERROR_INVALID_PARAMETER;
     }
+
+    fips_self_test_hash256();
+
     IppStatus ipp_ret = ippStsNoErr;
     ipp_ret = ippsHashGetTag_rmf((Ipp8u*)p_hash, SGX_SHA256_HASH_SIZE, (IppsHashState_rmf*)sha_handle);
     switch (ipp_ret)
