@@ -109,6 +109,7 @@ impl_enum! {
         INvaliedPlatfromCert    = 0x0000_8005,      /* The PCK Cert for the platform is not available. */
 
         EnclaveCreateInterrupted = 0x0000_F001,     /* The ioctl for enclave_create unexpectedly failed with EINTR. */
+        AddressNotInEnclave     = 0x0000_F002,     /* The address is not in the enclave. */
     }
 }
 
@@ -202,6 +203,7 @@ impl SgxStatus {
             SgxStatus::INvaliedPlatfromCert => "The PCK Cert for the platform is not available.",
 
             SgxStatus::EnclaveCreateInterrupted => "The ioctl for enclave_create unexpectedly failed with EINTR.",
+            SgxStatus::AddressNotInEnclave => "The address is not in the enclave.",
         }
     }
 
@@ -287,6 +289,7 @@ impl SgxStatus {
             SgxStatus::INvaliedPlatfromCert => "INvaliedPlatfromCert",
 
             SgxStatus::EnclaveCreateInterrupted => "EnclaveCreateInterrupted",
+            SgxStatus::AddressNotInEnclave => "AddressNotInEnclave",
         }
     }
 }

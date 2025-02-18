@@ -143,7 +143,7 @@ impl ECallTable {
         let addr = self.ecall_table[index].addr;
         ensure!(
             enclave::is_within_enclave(addr as *const u8, 0),
-            SgxStatus::Unexpected
+            SgxStatus::AddressNotInEnclave
         );
 
         Ok(unsafe { mem::transmute::<usize, FnEcall>(addr) })
