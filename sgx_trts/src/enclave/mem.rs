@@ -133,7 +133,8 @@ impl Image {
     fn elrange_base() -> usize {
         let global_data = arch::Global::get();
 
-        if global_data.enclave_image_base != 0 {
+        // If elrange_start_base is not 0, it means elrange is set
+        if global_data.elrange_size != 0 {
             if global_data.enclave_image_base as usize != Self::image_base() {
                 error::abort();
             }
