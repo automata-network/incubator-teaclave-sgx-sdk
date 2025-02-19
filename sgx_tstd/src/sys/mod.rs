@@ -18,8 +18,8 @@
 use crate::ffi::CString;
 use crate::io::ErrorKind;
 
-use sgx_oc::ocall::{self, OCallResult};
 use sgx_oc as libc;
+use sgx_oc::ocall::{self, OCallResult};
 use sgx_trts::error::abort;
 
 pub use self::rand::hashmap_random_keys;
@@ -64,7 +64,7 @@ mod personality;
 // NOTE: this is not guaranteed to run, for example when Rust code is called externally.
 pub unsafe fn init(env: Vec<CString>, args: Vec<CString>) {
     let _ = ocall::initenv(Some(env));
-    let _ = ocall::initargs(Some(args));
+    // let _ = ocall::initargs(Some(args));
 }
 
 // SAFETY: must be called only once during runtime cleanup.
@@ -143,7 +143,11 @@ macro_rules! impl_is_minus_one {
 impl_is_minus_one! { i8 i16 i32 i64 isize }
 
 pub fn cvt<T: IsMinusOne>(t: T) -> crate::io::Result<T> {
-    if t.is_minus_one() { Err(crate::io::Error::last_os_error()) } else { Ok(t) }
+    if t.is_minus_one() {
+        Err(crate::io::Error::last_os_error())
+    } else {
+        Ok(t)
+    }
 }
 
 pub fn cvt_r<T, F>(mut f: F) -> crate::io::Result<T>
@@ -160,7 +164,11 @@ where
 }
 
 pub fn cvt_nz(error: libc::c_int) -> crate::io::Result<()> {
-    if error == 0 { Ok(()) } else { Err(crate::io::Error::from_raw_os_error(error)) }
+    if error == 0 {
+        Ok(())
+    } else {
+        Err(crate::io::Error::from_raw_os_error(error))
+    }
 }
 
 pub fn cvt_ocall<T>(result: OCallResult<T>) -> crate::io::Result<T> {
