@@ -357,8 +357,9 @@ pub fn is_within_enclave(p: *const u8, len: usize) -> bool {
         start
     };
     let base = MmLayout::elrange_base();
+    let enclave_end = base + MmLayout::elrange_size();
 
-    (start <= end) && (start >= base) && (end < base + MmLayout::elrange_size())
+    (start <= end) && (start >= base) && (end <= enclave_end)
 }
 
 pub fn is_within_host(p: *const u8, len: usize) -> bool {
